@@ -1,0 +1,19 @@
+{
+  "budget": [
+    {
+      "id": "0c3c",
+      "Food": 777,
+      "Transport": 7777,
+      "Entertainment": 7777777,
+      "Utilities": 777,
+      "Healthcare": 7777,
+      "Shopping": 777777,
+      "Education": 777,
+      "Rent": 777,
+      "Insurance": 776,
+      "Savings": 777,
+      "Miscellaneous": 777
+    }
+  ],
+  "transactions": []
+}
