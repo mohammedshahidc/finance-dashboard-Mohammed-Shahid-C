@@ -1,289 +1,493 @@
-import React, { useState } from 'react';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import dayjs from 'dayjs';
-import { DollarSign, Calendar, FileText, Tag, Plus, Edit3, X, Check } from 'lucide-react';
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import React, { useContext, useEffect, useState } from 'react';
+import {
+    DollarSign,
+    Calendar,
+    FileText,
+    Tag,
+    X,
+    Check,
+    Plus,
+    Minus,
+    Receipt,
+    Sparkles,
+    AlertCircle,
+    TrendingUp,
+    TrendingDown
+} from 'lucide-react';
+import { TransactionContext } from '../../context/TransactionContext';
+import { useNavigate, useParams } from 'react-router-dom';
+
 const TransactionForm = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  dayjs.extend(isSameOrBefore);
-  const categories = [
-    'Food',
-    'Transport', 
-    'Entertainment',
-    'Bills',
-    'Shopping',
-    'Salary',
-    'Freelance',
-    'Other'
-  ];
-
-  // Validation Schema
-  const validationSchema = Yup.object({
-    amount: Yup.number()
-      .required('Amount is required')
-      .positive('Amount must be greater than 0')
-      .typeError('Amount must be a valid number'),
-    category: Yup.string()
-      .required('Category is required')
-      .oneOf(categories, 'Please select a valid category'),
-    description: Yup.string().max(200, 'Description must be less than 200 characters'),
-    date: Yup.string()
-      .required('Date is required')
-      .test('not-future-expense', 'Expense date cannot be in the future', function (value) {
-        const { type } = this.parent;
-        if (type === 'expense' && value) {
-          return dayjs(value).isSameOrBefore(dayjs(), 'day');
+    const { addTransaction, getTransactionsById, transactionsById, updateTransaction } = useContext(TransactionContext)
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { id } = useParams()
+    const navigate=useNavigate('/')
+    useEffect(() => {
+        if (id) {
+            getTransactionsById(id)
+            setIsEditMode(true)
+        } else {
+            setIsEditMode(false)
         }
-        return true;
-      }),
-    type: Yup.string()
-      .required('Transaction type is required')
-      .oneOf(['income', 'expense'], 'Invalid transaction type')
-  });
+    }, [id])
+    useEffect(() => {
+        if (transactionsById && id) {
+          setFormData({
+            amount: transactionsById.amount || '',
+            category: transactionsById.category || '',
+            description: transactionsById.description || '',
+            date: transactionsById.date || new Date().toISOString().split('T')[0],
+            type: transactionsById.type || 'expense'
+          });
+        }
+      }, [transactionsById, id]);
+      
 
-  // Formik setup
-  const formik = useFormik({
-    initialValues: {
-      amount: '',
-      category: '',
-      description: '',
-      date: dayjs().format('YYYY-MM-DD'),
-      type: 'expense'
-    },
-    validationSchema,
-    onSubmit: async (values) => {
-      setIsSubmitting(true);
+    // Form state
+    const [formData, setFormData] = useState({
+        amount:'',
+        category: '',
+        description:'',
+        date:new Date().toISOString().split('T')[0],
+        type:'expense'
+    });
 
-      try {
-        const formattedData = {
-          ...values,
-          amount: parseFloat(values.amount),
-          date: dayjs(values.date).format('YYYY-MM-DD'),
-          submittedAt: dayjs().format('YYYY-MM-DD HH:mm:ss')
-        };
+    const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
 
-        console.log('Submitting transaction:', formattedData);
+    const categories = [
+        { name: 'Food', icon: '🍕', color: 'from-orange-400 to-red-500' },
+        { name: 'Transport', icon: '🚗', color: 'from-blue-400 to-blue-600' },
+        { name: 'Entertainment', icon: '🎬', color: 'from-purple-400 to-pink-500' },
+        { name: 'Bills', icon: '⚡', color: 'from-yellow-400 to-orange-500' },
+        { name: 'Shopping', icon: '🛍️', color: 'from-pink-400 to-rose-500' },
+        { name: 'Salary', icon: '💰', color: 'from-green-400 to-emerald-500' },
+        { name: 'Freelance', icon: '💻', color: 'from-indigo-400 to-purple-500' },
+        { name: 'Other', icon: '📦', color: 'from-gray-400 to-slate-500' }
+    ];
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'amount':
+                if (!value) return 'Amount is required';
+                if (isNaN(value) || parseFloat(value) <= 0) return 'Amount must be greater than 0';
+                return '';
+            case 'category':
+                if (!value) return 'Category is required';
+                return '';
+            case 'date':
+                if (!value) return 'Date is required';
+                if (formData.type === 'expense' && new Date(value) > new Date()) {
+                    return 'Expense date cannot be in the future';
+                }
+                return '';
+            case 'description':
+                if (value.length > 200) return 'Description must be less than 200 characters';
+                return '';
+            default:
+                return '';
+        }
+    };
 
-        setShowSuccess(true);
+    const handleInputChange = (name, value) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
+        setTouched(prev => ({ ...prev, [name]: true }));
 
-        setTimeout(() => {
-          setShowSuccess(false);
-          formik.resetForm();
-          setIsEditMode(false);
-        }, 2000);
+        const error = validateField(name, value);
+        setErrors(prev => ({ ...prev, [name]: error }));
+    };
 
-      } catch (error) {
-        console.error('Error submitting transaction:', error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  });
+    const handleSubmit = async () => {
+        // Validate all fields
+        const newErrors = {};
+        const newTouched = {};
 
-  const resetForm = () => {
-    formik.resetForm();
-    setIsEditMode(false);
-  };
+        Object.keys(formData).forEach(key => {
+            newTouched[key] = true;
+            const error = validateField(key, formData[key]);
+            if (error) newErrors[key] = error;
+        });
 
-  const getFieldError = (fieldName) =>
-    formik.touched[fieldName] && formik.errors[fieldName];
+        setErrors(newErrors);
+        setTouched(newTouched);
 
-  const getFieldClasses = (fieldName) => {
-    const hasError = getFieldError(fieldName);
-    return `w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:border-transparent transition-all duration-200 ${
-      hasError
-        ? 'border-red-500 focus:ring-red-500'
-        : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500 dark:focus:ring-purple-500'
-    }`;
-  };
+        if (Object.keys(newErrors).some(key => newErrors[key])) return;
 
-  return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        setIsSubmitting(true);
+        try {
+            const formattedData = {
+                ...formData,
+                id: Date.now(),
+                amount: parseFloat(formData.amount),
+                submittedAt: new Date().toISOString()
+            };
+            if (isEditMode) {
+                updateTransaction(id, formData)
 
-        {/* Success Message */}
-        {showSuccess && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-green-600 dark:text-green-400 mr-3" />
-                <p className="text-green-800 dark:text-green-300 font-medium">
-                  Transaction {isEditMode ? 'updated' : 'added'} successfully on {dayjs().format('MMM D, YYYY')}!
-                </p>
-              </div>
+            } else {
+                addTransaction(formData)
+
+            }
+            setTimeout(() => {
+                resetForm();
+                setIsEditMode(false)
+                navigate('/')
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error submitting transaction:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            amount: '',
+            category: '',
+            description: '',
+            date: new Date().toISOString().split('T')[0],
+            type: 'expense'
+        });
+        setErrors({});
+        setTouched({});
+        setIsEditMode(false);
+    };
+
+    const getFieldError = (fieldName) => touched[fieldName] && errors[fieldName];
+
+    const getSelectedCategory = () => {
+        return categories.find(cat => cat.name === formData.category);
+    };
+
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    return (
+        <div className={`min-h-screen transition-all duration-500 ${isDarkMode
+                ? 'bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900'
+                : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'
+            }`}>
+
+
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Header */}
+                <div className={`${isDarkMode
+                        ? 'bg-gray-800/80 border-gray-700'
+                        : 'bg-white/80 border-white/20'
+                    } backdrop-blur-xl rounded-3xl shadow-2xl border overflow-hidden mb-8`}>
+                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-4xl font-bold text-white mb-2 flex items-center">
+                                    <Receipt className="mr-3 w-10 h-10" />
+                                    Add Transaction
+                                </h1>
+                                <p className="text-indigo-100 text-lg">
+                                    Track your income and expenses with ease
+                                </p>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
+                                    <Sparkles className="w-8 h-8 text-white mx-auto mb-2" />
+                                    <p className="text-white/80 text-sm font-medium">Quick & Simple</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Form */}
+                <div className={`${isDarkMode
+                        ? 'bg-gray-800/80 border-gray-700'
+                        : 'bg-white/80 border-white/20'
+                    } backdrop-blur-xl rounded-3xl shadow-2xl border overflow-hidden`}>
+                    <div className="p-8">
+
+                        {/* Transaction Type Toggle */}
+                        <div className="mb-8">
+                            <label className={`block text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'
+                                }`}>
+                                Transaction Type
+                            </label>
+                            <div className={`flex rounded-2xl p-2 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'
+                                } shadow-inner`}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleInputChange('type', 'expense')}
+                                    className={`flex-1 py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 transform flex items-center justify-center space-x-3 ${formData.type === 'expense'
+                                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl scale-105'
+                                            : `${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} hover:bg-white/50`
+                                        }`}
+                                >
+                                    <Minus className="w-6 h-6" />
+                                    <span>Expense</span>
+                                    <TrendingDown className="w-5 h-5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleInputChange('type', 'income')}
+                                    className={`flex-1 py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 transform flex items-center justify-center space-x-3 ${formData.type === 'income'
+                                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-xl scale-105'
+                                            : `${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} hover:bg-white/50`
+                                        }`}
+                                >
+                                    <Plus className="w-6 h-6" />
+                                    <span>Income</span>
+                                    <TrendingUp className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Form Fields */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                            {/* Amount Field */}
+                            <div className="lg:col-span-2">
+                                <label htmlFor="amount" className={`block text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'
+                                    }`}>
+                                    Amount *
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                                        <DollarSign className={`w-6 h-6 ${getFieldError('amount') ? 'text-red-500' : 'text-gray-400'
+                                            }`} />
+                                    </div>
+                                    <input
+                                        type="number"
+                                        id="amount"
+                                        step="0.01"
+                                        min="0"
+                                        value={formData.amount}
+                                        onChange={(e) => handleInputChange('amount', e.target.value)}
+                                        className={`w-full pl-14 pr-6 py-6 text-2xl font-bold rounded-2xl border-2 transition-all duration-300 ${getFieldError('amount')
+                                                ? `border-red-300 ${isDarkMode ? 'bg-red-900/20 text-white focus:border-red-400' : 'bg-red-50 text-red-900 focus:border-red-500'} focus:ring-4 focus:ring-red-100`
+                                                : `${isDarkMode
+                                                    ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-500 focus:ring-purple-900/20'
+                                                    : 'bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-indigo-100'
+                                                } focus:ring-4`
+                                            } focus:outline-none shadow-lg hover:shadow-xl`}
+                                        placeholder="0.00"
+                                    />
+                                    {getFieldError('amount') && (
+                                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                                            <AlertCircle className="w-6 h-6 text-red-500" />
+                                        </div>
+                                    )}
+                                </div>
+                                {getFieldError('amount') && (
+                                    <div className="mt-3 flex items-center text-red-600 text-sm">
+                                        <AlertCircle className="w-4 h-4 mr-2" />
+                                        {errors.amount}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Category Field */}
+                            <div>
+                                <label htmlFor="category" className={`block text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'
+                                    }`}>
+                                    Category *
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                                        {getSelectedCategory() ? (
+                                            <span className="text-2xl">{getSelectedCategory().icon}</span>
+                                        ) : (
+                                            <Tag className={`w-6 h-6 ${getFieldError('category') ? 'text-red-500' : 'text-gray-400'
+                                                }`} />
+                                        )}
+                                    </div>
+                                    <select
+                                        id="category"
+                                        value={formData.category}
+                                        onChange={(e) => handleInputChange('category', e.target.value)}
+                                        className={`w-full pl-14 pr-6 py-4 text-lg font-semibold rounded-2xl border-2 transition-all duration-300 ${getFieldError('category')
+                                                ? `border-red-300 ${isDarkMode ? 'bg-red-900/20 text-white focus:border-red-400' : 'bg-red-50 text-red-900 focus:border-red-500'} focus:ring-4 focus:ring-red-100`
+                                                : `${isDarkMode
+                                                    ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-500 focus:ring-purple-900/20'
+                                                    : 'bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-indigo-100'
+                                                } focus:ring-4`
+                                            } focus:outline-none shadow-lg hover:shadow-xl cursor-pointer`}
+                                    >
+                                        <option value="">Select a category</option>
+                                        {categories.map((category) => (
+                                            <option key={category.name} value={category.name}>
+                                                {category.icon} {category.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {getFieldError('category') && (
+                                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                                            <AlertCircle className="w-6 h-6 text-red-500" />
+                                        </div>
+                                    )}
+                                </div>
+                                {getFieldError('category') && (
+                                    <div className="mt-3 flex items-center text-red-600 text-sm">
+                                        <AlertCircle className="w-4 h-4 mr-2" />
+                                        {errors.category}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Date Field */}
+                            <div>
+                                <label htmlFor="date" className={`block text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'
+                                    }`}>
+                                    Date *
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                                        <Calendar className={`w-6 h-6 ${getFieldError('date') ? 'text-red-500' : 'text-gray-400'
+                                            }`} />
+                                    </div>
+                                    <input
+                                        type="date"
+                                        id="date"
+                                        value={formData.date}
+                                        onChange={(e) => handleInputChange('date', e.target.value)}
+                                        max={formData.type === 'expense' ? new Date().toISOString().split('T')[0] : undefined}
+                                        className={`w-full pl-14 pr-6 py-4 text-lg font-semibold rounded-2xl border-2 transition-all duration-300 ${getFieldError('date')
+                                                ? `border-red-300 ${isDarkMode ? 'bg-red-900/20 text-white focus:border-red-400' : 'bg-red-50 text-red-900 focus:border-red-500'} focus:ring-4 focus:ring-red-100`
+                                                : `${isDarkMode
+                                                    ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-500 focus:ring-purple-900/20'
+                                                    : 'bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-indigo-100'
+                                                } focus:ring-4`
+                                            } focus:outline-none shadow-lg hover:shadow-xl`}
+                                    />
+                                    {getFieldError('date') && (
+                                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                                            <AlertCircle className="w-6 h-6 text-red-500" />
+                                        </div>
+                                    )}
+                                </div>
+                                {getFieldError('date') && (
+                                    <div className="mt-3 flex items-center text-red-600 text-sm">
+                                        <AlertCircle className="w-4 h-4 mr-2" />
+                                        {errors.date}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Description Field */}
+                            <div className="lg:col-span-2">
+                                <label htmlFor="description" className={`block text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'
+                                    }`}>
+                                    Description (Optional)
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-4 z-10">
+                                        <FileText className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                    <textarea
+                                        id="description"
+                                        rows={4}
+                                        maxLength={200}
+                                        value={formData.description}
+                                        onChange={(e) => handleInputChange('description', e.target.value)}
+                                        className={`w-full pl-14 pr-6 py-4 text-lg rounded-2xl border-2 transition-all duration-300 resize-none ${isDarkMode
+                                                ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-500 focus:ring-purple-900/20'
+                                                : 'bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-indigo-100'
+                                            } focus:ring-4 focus:outline-none shadow-lg hover:shadow-xl`}
+                                        placeholder="Add a note about this transaction..."
+                                    />
+                                </div>
+                                <div className="flex justify-between mt-2">
+                                    <div></div>
+                                    <span className={`text-sm font-medium ${formData.description.length > 180
+                                            ? 'text-orange-500'
+                                            : isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                        }`}>
+                                        {formData.description.length}/200
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Submit Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-6 mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                            <button
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || Object.values(errors).some(error => error)}
+                                className={`flex-1 group relative overflow-hidden py-5 px-8 text-xl font-bold rounded-2xl transition-all duration-300 transform ${isSubmitting || Object.values(errors).some(error => error)
+                                        ? 'bg-gray-400 cursor-not-allowed text-white'
+                                        : formData.type === 'expense'
+                                            ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-2xl hover:-translate-y-1 active:scale-95'
+                                            : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-2xl hover:-translate-y-1 active:scale-95'
+                                    }`}
+                            >
+                                <div className="flex items-center justify-center space-x-3">
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            <span>Processing...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {formData.type === 'expense' ? (
+                                                <Minus className="w-6 h-6" />
+                                            ) : (
+                                                <Plus className="w-6 h-6" />
+                                            )}
+                                            <span><span>{isEditMode ? 'Edit Transaction' : 'Add Transaction'}</span>
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Button shine effect */}
+                                {!isSubmitting && !Object.values(errors).some(error => error) && (
+                                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                                )}
+                            </button>
+
+                            <button
+                                onClick={resetForm}
+                                className={`flex-1 sm:flex-none py-5 px-8 text-lg font-semibold rounded-2xl border-2 transition-all duration-300 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center space-x-3 ${isDarkMode
+                                        ? 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700 hover:border-gray-500'
+                                        : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400'
+                                    } shadow-lg hover:shadow-xl`}
+                            >
+                                <X className="w-5 h-5" />
+                                <span>Reset Form</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quick Tips */}
+                <div className={`mt-8 ${isDarkMode
+                        ? 'bg-gray-800/60 border-gray-700'
+                        : 'bg-white/60 border-white/20'
+                    } backdrop-blur-xl rounded-2xl shadow-xl border p-6`}>
+                    <div className="flex items-center space-x-3 mb-4">
+                        <Sparkles className={`w-6 h-6 ${isDarkMode ? 'text-purple-400' : 'text-indigo-500'}`} />
+                        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                            Quick Tips
+                        </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                            💡 <strong>Be specific:</strong> Add clear descriptions to track spending patterns
+                        </p>
+                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                            🎯 <strong>Categories matter:</strong> Choose the right category for better insights
+                        </p>
+                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                            📅 <strong>Date accuracy:</strong> Use the actual transaction date for better tracking
+                        </p>
+                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                            ⚡ <strong>Quick entry:</strong> Add transactions immediately to avoid forgetting
+                        </p>
+                    </div>
+                </div>
             </div>
-          </div>
-        )}
-
-        {/* Form Container */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-            <div className="p-4 sm:p-6">
-              
-              {/* Transaction Type Toggle */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Transaction Type
-                </label>
-                <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                  <button
-                    type="button"
-                    onClick={() => formik.setFieldValue('type', 'expense')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
-                      formik.values.type === 'expense'
-                        ? 'bg-red-500 text-white shadow-md'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    Expense
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => formik.setFieldValue('type', 'income')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
-                      formik.values.type === 'income'
-                        ? 'bg-green-500 text-white shadow-md'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    Income
-                  </button>
-                </div>
-              </div>
-
-              {/* Form Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                {/* Amount */}
-                <div>
-                  <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Amount *
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="number"
-                      id="amount"
-                      name="amount"
-                      step="0.01"
-                      min="0"
-                      value={formik.values.amount}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={getFieldClasses('amount')}
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Category *
-                  </label>
-                  <div className="relative">
-                    <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <select
-                      id="category"
-                      name="category"
-                      value={formik.values.category}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={getFieldClasses('category')}
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Date */}
-                <div>
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Date
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="date"
-                      id="date"
-                      name="date"
-                      value={formik.values.date}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      max={dayjs().format('YYYY-MM-DD')}
-                      className={getFieldClasses('date')}
-                    />
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="md:col-span-2">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Description (Optional)
-                  </label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows="3"
-                      maxLength="200"
-                      value={formik.values.description}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none"
-                      placeholder="Add a note about this transaction..."
-                    />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {formik.values.description.length}/200
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={formik.handleSubmit}
-                  disabled={isSubmitting || !formik.isValid}
-                  className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-medium text-white transition-all duration-200 ${
-                    isSubmitting || !formik.isValid
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : formik.values.type === 'expense'
-                      ? 'bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-500/25'
-                      : 'bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-500/25'
-                  } shadow-lg hover:shadow-xl transform hover:-translate-y-0.5`}
-                >
-                  {isSubmitting ? 'Processing...' : isEditMode ? 'Update Transaction' : 'Add Transaction'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="flex-1 sm:flex-none px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
-                >
-                  <X className="h-5 w-5 mr-2 inline" />
-                  Reset Form
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
-
-export default TransactionForm;
+export default TransactionForm

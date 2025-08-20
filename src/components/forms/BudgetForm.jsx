@@ -3,9 +3,6 @@ import {
   Save,
   IndianRupee,
   AlertCircle,
-  TrendingUp,
-  Target,
-  DollarSign,
   UtensilsCrossed,
   Car,
   Film,
@@ -20,10 +17,11 @@ import {
 } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import dayjs from 'dayjs';
 import { BudgetContext } from '../../context/budgetContext';
 
 const BudgetForm = () => {
-  const { addBudgt } = useContext(BudgetContext);
+  const { addBudget } = useContext(BudgetContext);
 
   const categories = [
     { name: 'Food', icon: UtensilsCrossed, color: 'from-orange-400 to-red-500' },
@@ -60,10 +58,20 @@ const BudgetForm = () => {
     initialValues,
     validationSchema,
     onSubmit: (values, { resetForm }) => {
-      console.log('Budget saved:', values);
-      addBudgt(values);
-      setIsSubmitted(true);
+      const now = dayjs();
+      const month = now.month() + 1;
+      const year = now.year();
 
+      const budgetData = {
+        categories: values,
+        month,
+        year,
+        total: getTotalBudget(values)
+      };
+
+      addBudget(budgetData);
+
+      setIsSubmitted(true);
       setTimeout(() => {
         setIsSubmitted(false);
         resetForm();
@@ -71,9 +79,9 @@ const BudgetForm = () => {
     }
   });
 
-  const getTotalBudget = () =>
+  const getTotalBudget = (values = formik.values) =>
     categories.reduce((total, category) => {
-      const amount = parseFloat(formik.values[category.name]) || 0;
+      const amount = parseFloat(values[category.name]) || 0;
       return total + amount;
     }, 0);
 
@@ -95,6 +103,7 @@ const BudgetForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
       <div className="max-w-6xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
         <form onSubmit={formik.handleSubmit}>
+          {/* Category Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {categories.map((category) => (
               <div key={category.name} className="p-6 border rounded-2xl">

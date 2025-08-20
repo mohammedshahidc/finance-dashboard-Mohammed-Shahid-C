@@ -1,19 +1,22 @@
 {
-  "budget": [
+  "budget": [],
+  "transactions": [
     {
-      "id": "0c3c",
-      "Food": 777,
-      "Transport": 7777,
-      "Entertainment": 7777777,
-      "Utilities": 777,
-      "Healthcare": 7777,
-      "Shopping": 777777,
-      "Education": 777,
-      "Rent": 777,
-      "Insurance": 776,
-      "Savings": 777,
-      "Miscellaneous": 777
+      "id": 1755664189071,
+      "amount": 780,
+      "category": "Food",
+      "description": "",
+      "date": "2025-08-20",
+      "type": "expense",
+      "submittedAt": "2025-08-20 09:59:49"
+    },
+    {
+      "amount": "96.98",
+      "category": "Transport",
+      "description": "iscisu",
+      "date": "2025-08-20",
+      "type": "expense",
+      "id": "84d4"
     }
-  ],
-  "transactions": []
+  ]
 }
