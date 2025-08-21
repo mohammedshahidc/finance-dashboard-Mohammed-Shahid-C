@@ -23,7 +23,8 @@ const TransactionForm = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { id } = useParams()
-    const navigate=useNavigate('/')
+    const navigate = useNavigate('/')
+
     useEffect(() => {
         if (id) {
             getTransactionsById(id)
@@ -32,30 +33,86 @@ const TransactionForm = () => {
             setIsEditMode(false)
         }
     }, [id])
+
     useEffect(() => {
         if (transactionsById && id) {
-          setFormData({
-            amount: transactionsById.amount || '',
-            category: transactionsById.category || '',
-            description: transactionsById.description || '',
-            date: transactionsById.date || new Date().toISOString().split('T')[0],
-            type: transactionsById.type || 'expense'
-          });
+            setFormData({
+                amount: transactionsById.amount || '',
+                category: transactionsById.category || '',
+                description: transactionsById.description || '',
+                date: transactionsById.date || new Date().toISOString().split('T')[0],
+                type: transactionsById.type || 'expense'
+            });
         }
-      }, [transactionsById, id]);
-      
+    }, [transactionsById, id]);
 
     // Form state
     const [formData, setFormData] = useState({
-        amount:'',
+        amount: '',
         category: '',
-        description:'',
-        date:new Date().toISOString().split('T')[0],
-        type:'expense'
+        description: '',
+        date: new Date().toISOString().split('T')[0],
+        type: 'expense'
     });
 
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
+
+    useEffect(() => {
+        const storedDarkMode = localStorage.getItem("darkMode");
+        if (storedDarkMode !== null) {
+            setIsDarkMode(storedDarkMode === "true");
+        }
+
+        const checkAndUpdateDarkMode = () => {
+            const currentStoredValue = localStorage.getItem("darkMode") === "true";
+            if (currentStoredValue !== isDarkMode) {
+                setIsDarkMode(currentStoredValue);
+            }
+        };
+
+        const handleStorageChange = (e) => {
+            if (e.key === 'darkMode' && e.newValue !== null) {
+                const newDarkMode = e.newValue === "true";
+                setIsDarkMode(newDarkMode);
+            }
+        };
+
+        const handleCustomDarkModeChange = (e) => {
+            setIsDarkMode(e.detail.isDarkMode);
+        };
+
+        const handleFocus = () => {
+            checkAndUpdateDarkMode();
+        };
+
+        const pollInterval = setInterval(checkAndUpdateDarkMode, 500);
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('darkModeChange', handleCustomDarkModeChange);
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                checkAndUpdateDarkMode();
+            }
+        });
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('darkModeChange', handleCustomDarkModeChange);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', checkAndUpdateDarkMode);
+            clearInterval(pollInterval);
+        };
+    }, [isDarkMode]);
+
+    // Apply theme changes
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+    }, [isDarkMode]);
 
     const categories = [
         { name: 'Food', icon: '🍕', color: 'from-orange-400 to-red-500' },
@@ -125,10 +182,8 @@ const TransactionForm = () => {
             };
             if (isEditMode) {
                 updateTransaction(id, formData)
-
             } else {
                 addTransaction(formData)
-
             }
             setTimeout(() => {
                 resetForm();
@@ -169,11 +224,9 @@ const TransactionForm = () => {
 
     return (
         <div className={`min-h-screen transition-all duration-500 ${isDarkMode
-                ? 'bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900'
+                ? 'bg-black'
                 : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'
             }`}>
-
-
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className={`${isDarkMode
@@ -434,8 +487,7 @@ const TransactionForm = () => {
                                             ) : (
                                                 <Plus className="w-6 h-6" />
                                             )}
-                                            <span><span>{isEditMode ? 'Edit Transaction' : 'Add Transaction'}</span>
-                                            </span>
+                                            <span>{isEditMode ? 'Edit Transaction' : 'Add Transaction'}</span>
                                         </>
                                     )}
                                 </div>
@@ -490,4 +542,5 @@ const TransactionForm = () => {
         </div>
     );
 };
-export default TransactionForm
+
+export default TransactionForm;

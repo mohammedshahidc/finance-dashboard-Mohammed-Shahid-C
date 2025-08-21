@@ -5,6 +5,7 @@ import TransactionForm from './components/forms/TransactionForm'
 import BudgetForm from './components/forms/BudgetForm'
 import TransactionsList from './components/dashboard/TransactionsList'
 import { Route, Routes } from 'react-router-dom'
+import SettingsComponent from './components/settings/SettingsComponent'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -13,12 +14,13 @@ function App() {
     <>
      <Navbar/>
      <Routes>
-      <Route path='/' element={<TransactionsList/>} />
-    <Route path='/transactions/edit/:id' element={<TransactionForm/>}/>
+      <Route path='/transactions' element={<TransactionsList/>} />
+      <Route path='/budgetform' element={<BudgetForm/>} />
+      <Route path='/settings' element={<SettingsComponent/>} />
+      <Route path='/transactions/edit/:id' element={<TransactionForm/>}/>
 
      </Routes>
-     {/* <TransactionForm/> */}
-     {/* <BudgetForm/> */}
+     
     </>
   )
 }

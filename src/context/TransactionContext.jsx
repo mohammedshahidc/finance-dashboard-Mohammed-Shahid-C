@@ -2,10 +2,9 @@ import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
-
+import { baseurl } from "./budgetContext";
 export const TransactionContext = createContext();
 
-const baseurl = "http://localhost:3000";
 
 const TransactionProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);

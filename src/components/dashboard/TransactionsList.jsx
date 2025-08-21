@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext } from 'react';
+import React, { useState, useMemo, useContext, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { 
   Edit, 
@@ -19,9 +19,10 @@ import {
 import { TransactionContext } from '../../context/TransactionContext';
 import { useNavigate } from 'react-router-dom';
 
-const TransactionsList = ({ itemsPerPage = 10, isDarkMode = false }) => {
+const TransactionsList = ({ itemsPerPage = 10}) => {
   const { transactions, deleteTransaction } = useContext(TransactionContext);
 const navigate=useNavigate()
+const [isDarkMode,setIsDarkMode]=useState(false)
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -29,7 +30,62 @@ const navigate=useNavigate()
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-console.log('tran:',transactions);
+
+  useEffect(() => {
+    const storedDarkMode = localStorage.getItem("darkMode");
+    if (storedDarkMode !== null) {
+        setIsDarkMode(storedDarkMode === "true");
+    }
+
+    const checkAndUpdateDarkMode = () => {
+        const currentStoredValue = localStorage.getItem("darkMode") === "true";
+        if (currentStoredValue !== isDarkMode) {
+            setIsDarkMode(currentStoredValue);
+        }
+    };
+
+    const handleStorageChange = (e) => {
+        if (e.key === 'darkMode' && e.newValue !== null) {
+            const newDarkMode = e.newValue === "true";
+            setIsDarkMode(newDarkMode);
+        }
+    };
+
+    const handleCustomDarkModeChange = (e) => {
+        setIsDarkMode(e.detail.isDarkMode);
+    };
+
+    const handleFocus = () => {
+        checkAndUpdateDarkMode();
+    };
+
+    const pollInterval = setInterval(checkAndUpdateDarkMode, 500);
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('darkModeChange', handleCustomDarkModeChange);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            checkAndUpdateDarkMode();
+        }
+    });
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('darkModeChange', handleCustomDarkModeChange);
+        window.removeEventListener('focus', handleFocus);
+        document.removeEventListener('visibilitychange', checkAndUpdateDarkMode);
+        clearInterval(pollInterval);
+    };
+}, [isDarkMode]);
+
+// Apply theme changes
+useEffect(() => {
+    if (isDarkMode) {
+        document.documentElement.classList.add("dark");
+    } else {
+        document.documentElement.classList.remove("dark");
+    }
+}, [isDarkMode]);
   const categories = [
     { name: 'Food', icon: '🍕', color: 'from-orange-400 to-red-500' },
     { name: 'Transport', icon: '🚗', color: 'from-blue-400 to-blue-600' },
@@ -94,7 +150,7 @@ console.log('tran:',transactions);
   return (
     <div className={`min-h-screen transition-all duration-500 ${
       isDarkMode 
-        ? 'bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900' 
+        ? 'bg-black' 
         : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

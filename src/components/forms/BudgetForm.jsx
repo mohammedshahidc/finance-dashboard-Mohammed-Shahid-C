@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Save,
   IndianRupee,
@@ -22,6 +22,22 @@ import { BudgetContext } from '../../context/budgetContext';
 
 const BudgetForm = () => {
   const { addBudget } = useContext(BudgetContext);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  // Apply dark mode and listen for changes (simplified)
+  useEffect(() => {
+    const handleDarkModeChange = (e) => {
+      setIsDarkMode(e.detail.isDarkMode);
+    };
+
+    window.addEventListener('darkModeChange', handleDarkModeChange);
+    
+    return () => {
+      window.removeEventListener('darkModeChange', handleDarkModeChange);
+    };
+  }, []);
 
   const categories = [
     { name: 'Food', icon: UtensilsCrossed, color: 'from-orange-400 to-red-500' },
@@ -87,11 +103,25 @@ const BudgetForm = () => {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-green-100 p-10 rounded-2xl shadow-lg text-center">
-          <Save className="w-12 h-12 text-green-600 mx-auto mb-4" />
-          <h2 className="text-3xl font-bold text-green-700">Budget Saved!</h2>
-          <p className="text-green-600 mt-2">
+      <div className={`min-h-screen transition-all duration-500 flex items-center justify-center p-4 ${
+        isDarkMode 
+          ? 'bg-black' 
+          : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'
+      }`}>
+        <div className={`${
+          isDarkMode 
+            ? 'bg-gray-800/80 border-gray-700' 
+            : 'bg-white/80 border-white/20'
+        } backdrop-blur-xl rounded-3xl shadow-2xl border p-10 text-center`}>
+          <Save className={`w-12 h-12 ${
+            isDarkMode ? 'text-green-400' : 'text-green-600'
+          } mx-auto mb-4`} />
+          <h2 className={`text-3xl font-bold ${
+            isDarkMode ? 'text-green-300' : 'text-green-700'
+          }`}>Budget Saved!</h2>
+          <p className={`${
+            isDarkMode ? 'text-green-400' : 'text-green-600'
+          } mt-2`}>
             Your total monthly budget is ₹{getTotalBudget().toLocaleString('en-IN')}
           </p>
         </div>
@@ -100,25 +130,41 @@ const BudgetForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
-      <div className="max-w-6xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+    <div className={`min-h-screen transition-all duration-500 p-4 ${
+      isDarkMode 
+        ? 'bg-black' 
+        : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'
+    }`}>
+      <div className={`max-w-6xl mx-auto ${
+        isDarkMode 
+          ? 'bg-gray-800/80 border-gray-700' 
+          : 'bg-white/80 border-white/20'
+      } backdrop-blur-xl rounded-3xl shadow-2xl border p-8`}>
         <form onSubmit={formik.handleSubmit}>
           {/* Category Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {categories.map((category) => (
-              <div key={category.name} className="p-6 border rounded-2xl">
+              <div key={category.name} className={`p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-800/80 border border-gray-700' 
+                  : 'bg-white/80 border border-white/20'
+              } backdrop-blur-xl`}>
                 <div className="flex items-center space-x-3 mb-4">
                   <div
                     className={`w-12 h-12 rounded-xl bg-gradient-to-r ${category.color} flex items-center justify-center text-white`}
                   >
                     <category.icon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-semibold">{category.name}</h3>
+                  <h3 className={`text-lg font-semibold ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>{category.name}</h3>
                 </div>
 
                 {/* Input Field */}
                 <div className="relative">
-                  <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <IndianRupee className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                  }`} />
                   <input
                     type="number"
                     name={category.name}
@@ -126,11 +172,13 @@ const BudgetForm = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     placeholder="Enter amount"
-                    className={`w-full pl-12 pr-4 py-3 rounded-xl border-2 ${
+                    className={`w-full pl-12 pr-4 py-3 rounded-xl border-2 transition-all duration-300 shadow-lg hover:shadow-xl ${
                       formik.touched[category.name] && formik.errors[category.name]
-                        ? 'border-red-400'
-                        : 'border-gray-200'
-                    }`}
+                        ? 'border-red-400 focus:ring-4 focus:ring-red-100'
+                        : isDarkMode 
+                          ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-4 focus:ring-purple-900/20' 
+                          : 'border-gray-200 bg-white text-gray-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100'
+                    } focus:outline-none`}
                   />
                   {formik.touched[category.name] && formik.errors[category.name] && (
                     <p className="text-red-500 text-sm mt-2 flex items-center">
@@ -145,12 +193,18 @@ const BudgetForm = () => {
 
           {/* Total + Submit */}
           <div className="flex justify-between items-center mb-6">
-            <p className="text-xl font-bold">
+            <p className={`text-xl font-bold ${
+              isDarkMode ? 'text-gray-100' : 'text-gray-900'
+            }`}>
               Total: ₹{getTotalBudget().toLocaleString('en-IN')}
             </p>
             <button
               type="submit"
-              className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700"
+              className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:-translate-y-1 active:scale-95 shadow-lg hover:shadow-2xl ${
+                isDarkMode
+                  ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white'
+                  : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white'
+              }`}
             >
               <Save className="inline w-5 h-5 mr-2" />
               Save Budget

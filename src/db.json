@@ -18,5 +18,10 @@
       "type": "expense",
       "id": "84d4"
     }
-  ]
+  ],
+  "user": {
+    "name": "Mohammed Shahid c",
+    "email": "shahidmohammed4083@gmail.com",
+    "currency": "INR"
+  }
 }
