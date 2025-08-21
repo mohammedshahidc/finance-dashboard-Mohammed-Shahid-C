@@ -21,6 +21,7 @@ import {
     PoundSterling,
     PiggyBank
 } from 'lucide-react';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { userContext } from '../../context/userContext';
 import { BudgetContext } from '../../context/budgetContext';
@@ -125,9 +126,9 @@ const SettingsComponent = () => {
     const handleExportData = () => {
         try {
           const data = {
-            user,              // from userContext
-            budget: budgets,   // from BudgetContext
-            transactions,      // from TransactionContext
+            user,              
+            budget: budgets,   
+            transactions,      
             settings: { isDarkMode },
             exportDate: new Date().toISOString()
           };
@@ -209,6 +210,89 @@ const SettingsComponent = () => {
        getUser() 
     }
 
+    const clearAllData = async () => {
+        try {
+          // Clear individual transactions (handle both string and number IDs)
+          for (const t of transactions) {
+            try {
+              await axios.delete(`http://localhost:3000/transactions/${t.id}`);
+              console.log(`✅ Deleted transaction ${t.id}`);
+            } catch (err) {
+              console.warn(`Failed to delete transaction ${t.id}:`, err);
+            }
+          }
+      
+          // Clear individual budget items (if any exist)
+          for (const b of budgets) {
+            try {
+              await axios.delete(`http://localhost:3000/budget/${b.id}`);
+              console.log(`✅ Deleted budget ${b.id}`);
+            } catch (err) {
+              console.warn(`Failed to delete budget ${b.id}:`, err);
+            }
+          }
+      
+          // Clear user data - try PUT method to replace entire user object
+          try {
+            await axios.put("http://localhost:3000/user", {
+              name: "",
+              email: "",
+              currency: "INR"
+            });
+            console.log("✅ Cleared user data with PUT");
+          } catch (err) {
+            console.warn("PUT failed, trying PATCH:", err);
+            try {
+              await axios.patch("http://localhost:3000/user", {
+                name: "",
+                email: "",
+                currency: "INR"
+              });
+              console.log("✅ Cleared user data with PATCH");
+            } catch (err2) {
+              console.error("Both PUT and PATCH failed for user:", err2);
+            }
+          }
+      
+          // Alternative: Reset entire collections (if individual deletes fail)
+          try {
+            // Reset transactions array to empty
+            await axios.put("http://localhost:3000/transactions", []);
+            console.log("✅ Reset transactions array");
+          } catch (err) {
+            console.warn("Failed to reset transactions array:", err);
+          }
+      
+          try {
+            // Reset budget array to empty
+            await axios.put("http://localhost:3000/budget", []);
+            console.log("✅ Reset budget array");
+          } catch (err) {
+            console.warn("Failed to reset budget array:", err);
+          }
+      
+          // Close the confirmation modal
+          setShowClearConfirm(false);
+          
+          // Reset local state
+          setProfile({ name: '', email: '', currency: 'INR' });
+          setName('');
+          setEmail('');
+          setCurrency('INR');
+          
+          console.log("✅ All data clearing operations completed");
+          
+          // Refresh the user context
+          if (getUser && typeof getUser === 'function') {
+            getUser();
+          }
+          
+        } catch (error) {
+          console.error("Failed to clear data:", error);
+          setShowClearConfirm(false); // Close modal even on error
+          alert("Data clearing completed. Check console for details on what was cleared.");
+        }
+      };
     return (
         <div className={`min-h-screen transition-all duration-500 ${isDarkMode
             ? 'bg-black'
@@ -537,7 +621,7 @@ const SettingsComponent = () => {
                                     ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700 text-white'
                                     : 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-800'
                                     }`}>
-                                    <div className="text-center">
+                                    <div className="text-center" onClick={()=>navigate('/reports')}>
                                         <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-2">
                                             <FileText className="w-5 h-5 text-white" />
                                         </div>
@@ -580,7 +664,7 @@ const SettingsComponent = () => {
 
                             <div className="flex space-x-4">
                                 <button
-                                    onClick={handleClearData}
+                                    onClick={clearAllData}
                                     className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all duration-200"
                                 >
                                     Yes, Clear All

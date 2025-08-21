@@ -1,26 +1,61 @@
 {
-  "budget": [],
+  "budget": [
+    {
+      "id": "5bc2",
+      "categories": {
+        "Food": 7800,
+        "Transport": 12000,
+        "Entertainment": 4800,
+        "Utilities": 5000,
+        "Healthcare": 10000,
+        "Shopping": 25000,
+        "Education": 8000,
+        "Rent": 6000,
+        "Insurance": 7799,
+        "Savings": 12000,
+        "Miscellaneous": 500
+      },
+      "month": 8,
+      "year": 2025,
+      "total": 98899
+    }
+  ],
   "transactions": [
     {
-      "id": 1755664189071,
-      "amount": 780,
+      "id": "b033",
+      "amount": "449.97",
       "category": "Food",
-      "description": "",
-      "date": "2025-08-20",
-      "type": "expense",
-      "submittedAt": "2025-08-20 09:59:49"
+      "description": "Food",
+      "date": "2025-08-21",
+      "type": "expense"
     },
     {
-      "amount": "96.98",
+      "id": "e0ed",
+      "amount": "4500",
+      "category": "Shopping",
+      "description": "Dress",
+      "date": "2025-08-21",
+      "type": "expense"
+    },
+    {
+      "amount": "2199.98",
       "category": "Transport",
-      "description": "iscisu",
-      "date": "2025-08-20",
+      "description": "Transpotation",
+      "date": "2025-08-21",
       "type": "expense",
-      "id": "84d4"
+      "id": "adc1"
+    },
+    {
+      "id": "0f9c",
+      "amount": "10000",
+      "category": "Salary",
+      "description": "Salary",
+      "date": "2025-08-21",
+      "type": "income"
     }
   ],
   "user": {
-    "name": "Mohammed Shahid c",
+    "name": "Mohammed Shahid",
     "email": "shahidmohammed4083@gmail.com",
     "currency": "INR"
   }

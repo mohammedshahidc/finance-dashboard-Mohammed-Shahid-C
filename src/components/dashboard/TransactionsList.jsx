@@ -14,7 +14,8 @@ import {
   TrendingDown,
   Receipt,
   Sparkles,
-  Eye
+  Eye,
+  Plus
 } from 'lucide-react';
 import { TransactionContext } from '../../context/TransactionContext';
 import { useNavigate } from 'react-router-dom';
@@ -156,28 +157,41 @@ useEffect(() => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className={`${isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white/80 border-white/20'} backdrop-blur-xl rounded-3xl shadow-2xl border overflow-hidden mb-8`}>
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold text-white mb-2 flex items-center">
-                  <Receipt className="mr-3 w-10 h-10" />
-                  Transaction History
-                </h1>
-                <p className="text-indigo-100 text-lg">
-                  View and manage all your financial transactions
-                </p>
-              </div>
-              <div className="hidden md:block">
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                  <Eye className="w-8 h-8 text-white mx-auto mb-2" />
-                  <p className="text-white/80 text-sm font-medium">
-                    {filteredTransactions.length} Transactions
-                  </p>
-                </div>
-              </div>
-            </div>
+  <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8">
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-4xl font-bold text-white mb-2 flex items-center">
+          <Receipt className="mr-3 w-10 h-10" />
+          Transaction History
+        </h1>
+        <p className="text-indigo-100 text-lg">
+          View and manage all your financial transactions
+        </p>
+      </div>
+
+      {/* Right section with count + button */}
+      <div className="flex items-center gap-4">
+        <div className="hidden md:block">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
+            <Eye className="w-8 h-8 text-white mx-auto mb-2" />
+            <p className="text-white/80 text-sm font-medium">
+              {filteredTransactions.length} Transactions
+            </p>
           </div>
         </div>
+
+        <button 
+          onClick={() =>navigate('/addtransaction')}
+          className="flex items-center gap-2 bg-white text-indigo-600 font-semibold px-5 py-3 rounded-2xl shadow-md hover:bg-indigo-50 transition"
+        >
+          <Plus className="w-5 h-5" />
+          Add Transaction
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
         {/* Filters */}
         <div className={`${isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white/80 border-white/20'} backdrop-blur-xl rounded-3xl shadow-2xl border mb-8`}>

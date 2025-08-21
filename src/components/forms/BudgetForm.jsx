@@ -19,13 +19,14 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
 import { BudgetContext } from '../../context/budgetContext';
+import { useNavigate } from 'react-router-dom';
 
 const BudgetForm = () => {
   const { addBudget } = useContext(BudgetContext);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
   });
-
+const navigate=useNavigate()
   // Apply dark mode and listen for changes (simplified)
   useEffect(() => {
     const handleDarkModeChange = (e) => {
@@ -91,6 +92,7 @@ const BudgetForm = () => {
       setTimeout(() => {
         setIsSubmitted(false);
         resetForm();
+        navigate("/settings")
       }, 3000);
     }
   });

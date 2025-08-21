@@ -9,7 +9,15 @@ export const baseurl = "http://localhost:3000";
 const BudgetProvider = ({ children }) => {
   const [budgets, setBudgets] = useState([]);
 
- 
+  const fetchBudgets = async () => {
+    try {
+      const res = await axios.get(`${baseurl}/budget`);
+      setBudgets(res.data); 
+    } catch (error) {
+      console.error("Failed to fetch budgets:", error);
+      toast.error("Failed to load budgets");
+    }
+  };
   const addBudget = async (budgetData) => {
     try {
       const res = await axios.post(`${baseurl}/budget`, budgetData);
@@ -25,7 +33,9 @@ const BudgetProvider = ({ children }) => {
     return budgets.filter((b) => b.month === month && b.year === year);
   };
 
-
+useEffect(()=>{
+  fetchBudgets()
+},[])
   return (
     <BudgetContext.Provider
       value={{ budgets, addBudget, getMonthlyBudgets }}
