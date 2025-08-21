@@ -52,6 +52,14 @@
       "description": "Salary",
       "date": "2025-08-21",
       "type": "income"
+    },
+    {
+      "id": "b312",
+      "amount": "7799.96",
+      "category": "Freelance",
+      "description": "Freelance",
+      "date": "2025-08-21",
+      "type": "income"
     }
   ],
   "user": {
