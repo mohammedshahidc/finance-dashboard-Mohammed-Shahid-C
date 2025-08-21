@@ -215,7 +215,7 @@ const SettingsComponent = () => {
           // Clear individual transactions (handle both string and number IDs)
           for (const t of transactions) {
             try {
-              await axios.delete(`http://localhost:3000/transactions/${t.id}`);
+              await axios.delete(`https://finance-dashboard-mohammed-shahid-c-1.onrender.com/${t.id}`);
               console.log(`✅ Deleted transaction ${t.id}`);
             } catch (err) {
               console.warn(`Failed to delete transaction ${t.id}:`, err);
@@ -225,7 +225,7 @@ const SettingsComponent = () => {
           // Clear individual budget items (if any exist)
           for (const b of budgets) {
             try {
-              await axios.delete(`http://localhost:3000/budget/${b.id}`);
+              await axios.delete(`https://finance-dashboard-mohammed-shahid-c-1.onrender.com/${b.id}`);
               console.log(`✅ Deleted budget ${b.id}`);
             } catch (err) {
               console.warn(`Failed to delete budget ${b.id}:`, err);
@@ -234,7 +234,7 @@ const SettingsComponent = () => {
       
           // Clear user data - try PUT method to replace entire user object
           try {
-            await axios.put("http://localhost:3000/user", {
+            await axios.put("https://finance-dashboard-mohammed-shahid-c-1.onrender.com/user", {
               name: "",
               email: "",
               currency: "INR"
@@ -243,7 +243,7 @@ const SettingsComponent = () => {
           } catch (err) {
             console.warn("PUT failed, trying PATCH:", err);
             try {
-              await axios.patch("http://localhost:3000/user", {
+              await axios.patch("https://finance-dashboard-mohammed-shahid-c-1.onrender.com/user", {
                 name: "",
                 email: "",
                 currency: "INR"
@@ -257,7 +257,7 @@ const SettingsComponent = () => {
           // Alternative: Reset entire collections (if individual deletes fail)
           try {
             // Reset transactions array to empty
-            await axios.put("http://localhost:3000/transactions", []);
+            await axios.put("https://finance-dashboard-mohammed-shahid-c-1.onrender.com/transactions", []);
             console.log("✅ Reset transactions array");
           } catch (err) {
             console.warn("Failed to reset transactions array:", err);
@@ -265,7 +265,7 @@ const SettingsComponent = () => {
       
           try {
             // Reset budget array to empty
-            await axios.put("http://localhost:3000/budget", []);
+            await axios.put("https://finance-dashboard-mohammed-shahid-c-1.onrender.com/budget", []);
             console.log("✅ Reset budget array");
           } catch (err) {
             console.warn("Failed to reset budget array:", err);

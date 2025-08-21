@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import dayjs from "dayjs";
 
 export const BudgetContext = createContext();
-export const baseurl = "http://localhost:3000";
+export const baseurl = "https://finance-dashboard-mohammed-shahid-c-1.onrender.com";
 
 const BudgetProvider = ({ children }) => {
   const [budgets, setBudgets] = useState([]);
